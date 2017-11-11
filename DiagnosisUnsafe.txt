@@ -1,0 +1,23 @@
+DiagnosisUnsafe {
+  roles Patient, Doctor, Radiologist, Pathologist, TumorBoard
+  parameters out patientId key, out findings
+  private docRadResp,RadResp,PathRes,radiologistName,dateBiopsy,tissueSpecimen,pathFinalDiagnosis,radToPathFindings,radiologistDiagnosisFinal,radiologistDiagnosisIntermediate, reccomendBiopsy,pathDoubtDiagnosis,adjudicatedFinding //order, collection, specimen, unsuitable, received, result-id, request
+
+  Patient -> Doctor: VisitDoctor[out patientId]
+  Doctor -> Patient: DiagnosisFinal[in patientId, out findings, out docRadResp]
+  Doctor -> Patient: DiagnosisDoubt[in patientId, out radiologistName,out docRadResp]
+  Patient -> Radiologist: VisitRadiologist[in patientId, in radiologistName]
+  Radiologist -> Doctor: RadiologistDiagnosisFinal[in patientId, out radiologistDiagnosisFinal]
+  Radiologist -> Doctor: RadiologistDiagnosisDoubt[in patientId, out radiologistDiagnosisIntermediate, out reccomendBiopsy]
+  Doctor -> Patient: DocRadDiagnosisFinal[in patientId, in radiologistDiagnosisFinal, out findings]
+  Doctor -> Patient: DocRadDiagnosisDoubt[in patientId, in reccomendBiopsy, out dateBiopsy]
+  Patient -> Radiologist : VisitRadiologistBiopsy[in patientId, in dateBiopsy]	
+  Radiologist -> Pathologist : CoreNeedleBiopsy [in patientId, out tissueSpecimen, out radToPathFindings]
+  Pathologist -> Doctor : DiagnosisAgreement [in patientId, out pathFinalDiagnosis,out PathRes]
+  Pathologist -> TumorBoard : DiagnosisDisagreement[in patientId, out pathDoubtDiagnosis, in radToPathFindings,out PathRes]
+  Doctor -> Patient : DocPathFinalDiagnosis [in patientId, in pathFinalDiagnosis, out findings]
+  TumorBoard -> Doctor : ProvideAdjudicatedFinding[in patientId, in pathDoubtDiagnosis, in radToPathFindings, out adjudicatedFinding]
+  TumorBoard -> Radiologist : LearningMessageRadiologist[in patientId, in pathDoubtDiagnosis, in radToPathFindings, in adjudicatedFinding]
+  TumorBoard -> Pathologist : LearningMessagePathologist[in patientId, in pathDoubtDiagnosis, in radToPathFindings, in adjudicatedFinding]
+  Doctor -> Patient: DiscussTBFindingWithPatient[in patientId, in adjudicatedFinding, out findings]
+  }
